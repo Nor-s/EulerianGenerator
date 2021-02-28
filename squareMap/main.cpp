@@ -15,7 +15,7 @@ int main()
     euler::GameBoard gameboard(height, wide);
     //showEuler
     gameboard.printBoard();
-    gameboard.currentDeepthSetting(0);
+    gameboard.currentDeepthSetting(0, gameboard);
     gameboard.printBoard();
     cout<<"END\n";
     return 0;

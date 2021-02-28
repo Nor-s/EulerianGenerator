@@ -25,12 +25,16 @@ namespace euler
             //Setting GameBoard height x wide
             //initillize board, edge
             explicit GameBoard(int height = 0, int wide = 0);
+            int getBoard(int i, int j) const;
+            void setBoard(int i, int j, int that); 
+            int getHeight() const;
+            int getWide() const;
             //initial setting UNDEFINED
             void initialSetting();
             //print board 
             void printBoard();
             //merge i, j => up right down left merge
-            void mergeIt(int i, int j);
+            bool mergeIt(int i, int j);
             //merge tile if there are 2 WALL nearby
             void mergeAdjTwoEdge(int deepth);
             //merge tile if there are ROAD
@@ -43,9 +47,8 @@ namespace euler
             //if can't set return false and reconstruct
             //if next deepth have not even road return false and reconstruct
             //    even road mean: out int => can Euler circuit
-            bool currentDeepthSetting(int deepth);
-
-
+            bool currentDeepthSetting(int deepth, GameBoard& gameBoard);
+            int searchAndPush(int deepth, std::queue<int>& q, int what, bool dontPush = false);
     };
 } 
 #endif
