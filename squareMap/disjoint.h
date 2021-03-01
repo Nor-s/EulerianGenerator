@@ -7,9 +7,12 @@ namespace disjoint
 {
     struct Disjoint 
     {
-        std::vector<int> parent, rank;
+        std::vector<int> parent, rank, state;
         Disjoint(int n = 0);
         int find(int u);
+        int getState(int u);
+        void setState(int u, int x);
+        void addState(int u, int x);
         void merge(int u, int v);
     };
 }
