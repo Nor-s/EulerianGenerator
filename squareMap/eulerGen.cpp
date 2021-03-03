@@ -7,32 +7,31 @@ namespace euler
     //initillize '#' = wall and roadSetting
     GameBoard::GameBoard(int height, int wide)
     {
-        if(height%2 == 0) height++;
-        if(wide%2 == 0) wide++;
+        if (height % 2 == 0) height++;
+        if (wide % 2 == 0) wide++;
 
         edge = disjoint::Disjoint(wide * height);
-        
+
         board = std::vector<std::vector<int> >(height, std::vector<int>(wide, WALL));
         initialSetting();
     }
-    int GameBoard::toNum(int i, int j)
-    {
-        return i*getWide() + j;
-    }
-    int GameBoard::getBoard(int i, int j) const
-    {
-        return board[i][j];
-    }
+    int GameBoard::toNum(int i, int j){ return i * getWide() + j;}
+    int GameBoard::getBoard(int i, int j) const{ return board[i][j];}
     void GameBoard::setBoard(int i, int j, int that)
     {
-        if(i < 0 || j < 0 || i >= getHeight() || j >= getWide())
+        if (i < 0 || j < 0 || i >= getHeight() || j >= getWide())
         {
             std::cout << "i " << i << " j: " << j << "\n";
-            std::cout<<"BOUND ERROR\n";
+            std::cout << "BOUND ERROR\n";
             return;
         }
         board[i][j] = that;
     }
+    int GameBoard::getHeight() const { return board.size(); }
+    int GameBoard::getWide() const { return board[0].size(); }
+    int GameBoard::getEdgeState(int i, int j) { return edge.getState(toNum(i, j)); }
+    void GameBoard::setEdgeState(int i, int j, int x) { edge.setState(toNum(i, j), x); }
+    void GameBoard::addEdgeState(int i, int j, int x) { edge.addState(toNum(i, j), x); }
     bool GameBoard::isRange(int i, int j, int deepth)
     {
         int hLoHi[2] = { 1 + deepth * 2, getHeight() - 2 - deepth * 2 };
@@ -40,40 +39,46 @@ namespace euler
         return (hLoHi[0] == i || i == hLoHi[1]) && (wLoHi[0] <= j && j <= wLoHi[1])
             || (hLoHi[0] <= i && i <= hLoHi[1]) && (wLoHi[0] == j || j == wLoHi[1]);
     }
-    int GameBoard::getHeight() const {return board.size();}
-    int GameBoard::getWide() const {return board[0].size();}
     //initial setting UNDEFINED
     void GameBoard::initialSetting()
     {
-       for(int i = 1; i < getHeight() - 1; i++)
-            for(int j = 1; j < getWide() -1; j++)
-                if(i % 2 == 1 || j % 2 == 1)
+        for (int i = 1; i < getHeight() - 1; i++)
+            for (int j = 1; j < getWide() - 1; j++)
+                if (i % 2 == 1 || j % 2 == 1)
                     setBoard(i, j, UNDEFINED);
     }
     //print board
     void GameBoard::printBoard()
     {
-        for(int i = 0; i < getHeight(); i++)
+        for (int i = 0; i < getHeight(); i++)
         {
-            for(int j = 0; j < getWide(); j++)
+            for (int j = 0; j < getWide(); j++)
             {
                 char ch = '#';
-                if(getBoard(i, j) == ROAD)
+                if (getBoard(i, j) == ROAD)
                     ch = ' ';
-                if(getBoard(i, j) == UNDEFINED)
+                if (getBoard(i, j) == UNDEFINED)
                     ch = '.';
-                std::cout<<ch<<" ";
+                std::cout << ch << " ";
             }
-            std::cout<<"\n";
+            std::cout << "\n";
         }
     }
-    void GameBoard::pushToPq(int deepth, int i, int j)
+}
+
+
+
+
+
+namespace euler
+{
+    int GameBoard::pushToPq(int deepth, int i, int j)
     {
 
         if (!isRange(i, j, deepth))
         {
          //   std::cout << "cant push "<< i<< " " << j <<"\n"; 
-            return;
+            return 4;
         }
         int priority[3] = { 0, 0, 0 };
         for (int d = 0; d < 4; d++)
@@ -84,11 +89,12 @@ namespace euler
                                                                                     ((priority[0] + priority[2] == 4)? (priority[0] > priority[2] ? 3:7) : 2));
         if (visited[i][j] >= thisPriority)
         {
-            return;
+            return priority[0];
         }
         visited[i][j] = thisPriority;
         if (priority[0] > 0)
             pq.push(std::make_pair(thisPriority, toNum(i, j)));
+        return priority[0];
     }
 
     void GameBoard::merge(int deepth, int i, int j, int ii, int jj)
@@ -98,9 +104,17 @@ namespace euler
     }
     bool GameBoard::merge(int deepth, int i, int j, int d)
     {
-        pushToPq(deepth, i + dy[d] * 2, j + dx[d] * 2);
-        merge(deepth, i, j, i + dy[d], j + dx[d]);
-        merge(deepth, i, j, i + dy[d]*2, j + dx[d]*2);
+        int ii = i + dy[d], jj = j + dx[d] , iii = i + dy[d]*2, jjj = j + dx[d]*2;
+        if (getBoard(i, j) == ROAD && getBoard(ii, jj) == ROAD)
+            return false;
+        int undef = pushToPq(deepth, iii, jjj);
+        if(undef == 1)
+            addEdgeState(i, j, -1);
+        if (undef == 0)
+            return false;
+        addEdgeState(i, j, -1);
+        merge(deepth, i, j, ii, jj);
+        merge(deepth, i, j, iii, jjj);
         setBoard(i, j, ROAD); 
         return true;
     }
@@ -112,7 +126,7 @@ namespace euler
         int hLoHi[2] = {1+ deepth*2, getHeight()- 2 - deepth*2};
         int wLoHi[2] = {1+ deepth*2, getWide() - 2 - deepth*2};
         std::vector<int> dir;
-        std::vector<int> walldir;
+        std::vector<int> roaddir;
         //left and right
         for(int i = hLoHi[0]; i <= hLoHi[1] ; i+=2)
         {
@@ -122,75 +136,60 @@ namespace euler
                 {
                     if (getBoard(i + dy[d], wLoHi[j] + dx[d]) != WALL)
                         dir.push_back(d);
+                    if (getBoard(i + dy[d], wLoHi[j] + dx[d]) == ROAD)
+                        roaddir.push_back(d);
                 }
-                if (dir.size() == 2)
+                if (dir.size() == 2&&roaddir.size() != 2)
+                {
+              
+                    addEdgeState(i, wLoHi[j], -1);
                     for (int d = 0; d < dir.size(); d++)
                         merge(deepth, i, wLoHi[j], dir[d]);
-                dir.clear();
-                /*
-                for(int d = 0; d < 4; d++)
-                {
-                    if(getBoard(i + dy[d], wLoHi[j] + dx[d]) == UNDEFINED)
-                        dir.push_back(d);
-                    if (getBoard(i + dy[d], wLoHi[j] + dx[d]) == WALL)
-                        walldir.push_back(d);
                 }
-                if(dir.size() == 2 && walldir.size() == 2)
-                    for(int d = 0; d < dir.size(); d++)
-                         merge(deepth, i, wLoHi[j], dir[d]);
                 dir.clear();
-                walldir.clear();
-                */
+                roaddir.clear();
             }
         }
         //up and down
         for(int j = wLoHi[0] + 2; j <= wLoHi[1] - 2; j+=2)
         {
-            for(int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; i++)
             {
                 for (int d = 0; d < 4; d++)
                 {
                     if (getBoard(hLoHi[i] + dy[d], j + dx[d]) != WALL)
                         dir.push_back(d);
+                    if (getBoard(hLoHi[i] + dy[d], j + dx[d]) == ROAD)
+                        roaddir.push_back(d);
                 }
-                if (dir.size() == 2)
-                    for (int d = 0; d < dir.size(); d++)
-                        merge(deepth, hLoHi[i], j, dir[d]);
-                dir.clear();
-      
-                /*
-                for (int d = 0; d < 4; d++)
+                if (dir.size() == 2&&roaddir.size() != 2)
                 {
-                    if (getBoard(hLoHi[i] + dy[d], j + dx[d]) == UNDEFINED)
-                        dir.push_back(d);
-                    if (getBoard(hLoHi[i] + dy[d], j + dx[d]) == WALL)
-                        walldir.push_back(d);
-                }
-                if (dir.size() == 2 && walldir.size() == 2)
+
+                    addEdgeState(hLoHi[i], j, -1);
                     for (int d = 0; d < dir.size(); d++)
                         merge(deepth, hLoHi[i], j, dir[d]);
+                }
                 dir.clear();
-                walldir.clear();
-                */
+                roaddir.clear();
             }
         }
     }
 
     bool GameBoard::currentDeepthSetting(int deepth, GameBoard& gameBoard)
     {
-        if(deepth == 3) return true;
+        if(deepth > getHeight()/4 -1) return true;
         GameBoard tmp = gameBoard;
         tmp.visited = std::vector<std::vector<int> >(getHeight(), std::vector<int>(getWide(), -1));
         tmp.pq = std::priority_queue<std::pair<int, int> >();
         tmp.mergeTwoWall(deepth);
         tmp.searchAndPush(deepth, ROAD);
-        std::cout << "start "<<tmp.pq.size()<<"\n";
-        while (!tmp.pq.empty()) //|| tmp.searchAndPush(deepth, ROAD, UNDEFINED))
+   //     std::cout << "start "<<tmp.pq.size()<<"\n";
+        while (!tmp.pq.empty())
         {
             int here = tmp.pq.top().second; tmp.pq.pop();
             int j = here % getWide();
             int i = here / getWide();
-            std::cout << " i j " << i << " " << j << "\n";
+  //          std::cout << " i j " << i << " " << j << "\n";
             if (tmp.getBoard(i, j) == WALL) continue;
             if (!tmp.setRoad(deepth, i, j))
             {
@@ -200,8 +199,8 @@ namespace euler
             tmp.mergeTwoWall(deepth);
 
         }
-        tmp.printBoard();
-        std::cout << "\n";
+       // tmp.printBoard();
+       // std::cout << "\n";
         // -end-
         //if() return true   
         // if one of set cant out next deepth return false;
@@ -262,7 +261,9 @@ int getRandomNumber(int min, int max)
             else if(getBoard(i+dy[dir], j + dx[dir]) == ROAD)
                 road.push_back(dir);
         }
-        edge.addState(toNum(i, j), -1);
+        if (undefined.size() == 0) return true;
+        addEdgeState(i, j, -1);
+      //  std::cout <<" i j "<<i<<" "<<j<<" getEdge: " <<getEdgeState(i, j)<<"\n";
         // road -> undefined -> undefined : edgeState not change
         // road -> undefined -> road2      : edgeState road2.road 
         if(undefined.size() == 1 && road.size() == 1)
@@ -281,6 +282,7 @@ int getRandomNumber(int min, int max)
         // if road - undefined - road
         else if(undefined.size() == 2 && road.size() == 1)
         {
+
             int s = getRandomNumber(0, 1);
             int us = (s == 0)? 1 : 0;
 

@@ -33,6 +33,11 @@ namespace euler
             void setBoard(int i, int j, int that); 
             int getHeight() const;
             int getWide() const;
+            
+            int getEdgeState(int i, int j);
+            void setEdgeState(int i, int j, int x);
+            void addEdgeState(int i, int j, int x);
+
             bool isRange(int i, int j, int deepth);
             //initial setting UNDEFINED
             void initialSetting();
@@ -51,7 +56,7 @@ namespace euler
             //    even road mean: out int => can Euler circuit
             bool currentDeepthSetting(int deepth, GameBoard& gameBoard);
             bool searchAndPush(int deepth, int what, int dontNeed = UNDEFINED);
-            void pushToPq(int deepth, int i, int j);
+            int pushToPq(int deepth, int i, int j);
 
     };
     int getRandomNumber(int min, int max);
