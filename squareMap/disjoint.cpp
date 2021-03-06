@@ -2,16 +2,16 @@
 
 namespace disjoint
 {
-    Disjoint::Disjoint(int n): parent(n), rank(n, 1), state(n, 1)
+    Disjoint::Disjoint(int n) : parent(n), rank(n, 1), state(n, 1)
     {
-        for(int i = 0; i < parent.size();i++)
+        for (int i = 0; i < parent.size(); i++)
         {
             parent[i] = i;
         }
     }
     int Disjoint::find(int u)
     {
-        if(parent[u] == u) return u;
+        if (parent[u] == u) return u;
         return parent[u] = find(parent[u]);
     }
     int Disjoint::getState(int u)
@@ -29,15 +29,15 @@ namespace disjoint
     void Disjoint::merge(int u, int v)
     {
         u = find(u); v = find(v);
-        if(u == v) 
+        if (u == v)
         {
             return;
         }
-        if(rank[u] > rank[v]) 
+        if (rank[u] > rank[v])
             std::swap(u, v);
         parent[u] = v;
         state[v] = state[u] + state[v];
-        if(rank[u] == rank[v])
+        if (rank[u] == rank[v])
             rank[v]++;
     }
 }

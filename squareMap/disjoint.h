@@ -5,7 +5,7 @@
 
 namespace disjoint
 {
-    struct Disjoint 
+    struct Disjoint
     {
         std::vector<int> parent, rank, state;
         Disjoint(int n = 0);
