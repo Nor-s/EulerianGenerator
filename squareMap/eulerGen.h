@@ -13,12 +13,19 @@ namespace euler
 {
     const int dy[] = { -1, 0, 1,  0 };
     const int dx[] = { 0, 1, 0, -1 };
+    const int dir[] ={3, 5, 7, 11};
 
     enum State
     {
-        UNDEFINED,
-        WALL,
-        ROAD
+        WALL = 0,
+        UNDEFINED = 1,
+        ROAD = 2,
+        UP = 3,
+        RIGHT = 5,
+        DOWN = 7,
+        LEFT = 11,
+        DEFINED = 13,
+        FOUR = 3*5*7*11,
     };
     class GameBoard
     {
@@ -30,13 +37,13 @@ namespace euler
         //Setting GameBoard height x wide
         //initillize board, edge
         explicit GameBoard(int n = 0);
-        //initial setting UNDEFINED
-        void initialSetting();
+        void InitialBoard();
         //print board 
         void printBoard();
 
         bool isRange(int i, int j, int deepth);
         int toNum(int i, int j);
+        int reverseDir(int d);
 
         int getEdgeState(int i, int j);
         double getPriority(int deepth, int i, int j);
@@ -48,7 +55,7 @@ namespace euler
         void setEdgeState(int i, int j, int x);
         void setBoard(int i, int j, int that);
         bool setRoad(int deepth, int i, int j, std::vector<int>& selected);
-        void setWall(int deepth, int i, int j, std::vector<int>& undefined);
+        void setWall(int deepth, int i, int j, std::vector<int>& toWall);
         std::vector<std::vector<int> > getAdj(int i, int j);
 
         void pushAllDeepth(int deepth);
