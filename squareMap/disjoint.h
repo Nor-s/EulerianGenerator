@@ -7,6 +7,7 @@ namespace disjoint
 {
     struct Disjoint
     {
+        int treeNum;
         std::vector<int> parent, rank, state;
         Disjoint(int n = 0);
         int find(int u);

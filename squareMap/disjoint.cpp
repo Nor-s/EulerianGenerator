@@ -2,7 +2,7 @@
 
 namespace disjoint
 {
-    Disjoint::Disjoint(int n) : parent(n), rank(n, 1), state(n, 1)
+    Disjoint::Disjoint(int n) : parent(n), rank(n, 1), state(n, 1), treeNum(n)
     {
         for (int i = 0; i < parent.size(); i++)
         {
@@ -37,6 +37,7 @@ namespace disjoint
             std::swap(u, v);
         parent[u] = v;
         state[v] = state[u] + state[v];
+        treeNum--;
         if (rank[u] == rank[v])
             rank[v]++;
     }
