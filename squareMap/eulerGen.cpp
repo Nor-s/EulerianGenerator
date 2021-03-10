@@ -29,7 +29,6 @@ namespace euler
                 }
             }
         }
-        printBoard();
     }
     int GameBoard::toNum(int i, int j) { return i * getWide() + j; }
     int GameBoard::getBoard(int i, int j) const
@@ -56,15 +55,8 @@ namespace euler
     int GameBoard::getHeight() const { return board.size(); }
     int GameBoard::getWide() const { return board[0].size(); }
     int GameBoard::getEdgeState(int i, int j) { return edge.getState(toNum(i, j)); }
-    void GameBoard::setEdgeState(int i, int j, int x) { edge.setState(toNum(i, j), x); }
     void GameBoard::addEdgeState(int i, int j, int x) { edge.addState(toNum(i, j), x); }
-    bool GameBoard::isRange(int i, int j, int deepth)
-    {
-        int hLoHi[2] = { deepth, getHeight() - 1 - deepth };
-        int wLoHi[2] = { deepth, getWide() - 1 - deepth };
-        return (hLoHi[0] == i || i == hLoHi[1]) && (wLoHi[0] <= j && j <= wLoHi[1])
-            || (hLoHi[0] <= i && i <= hLoHi[1]) && (wLoHi[0] == j || j == wLoHi[1]);
-    }
+
     //print board
     void GameBoard::printBoard()
     {
@@ -72,6 +64,7 @@ namespace euler
         int height = getHeight() * 2 + 1;
         int width = getWide() * 2 + 1;
         std::vector<std::vector<int> > tmpBoard(height, std::vector<int>(width, WALL));
+        /*
         std::cout << "--------------------------------------------------------------\n";
         for (int i = 0; i < getHeight(); i++)
         {
@@ -104,6 +97,7 @@ namespace euler
             std::cout<<"\n";
         }
         */
+        std::cout << "setNum: " << edge.treeNum << "\n";
         for (int i = 0; i < getHeight(); i++)
             for (int j = 0; j < getWide(); j++)
             {
@@ -256,38 +250,23 @@ namespace euler
         return true;
     }
 
-    bool GameBoard::currentDeepthSetting(int deepth, GameBoard& gameBoard)
+    bool GameBoard::makeEven(int deepth, GameBoard& gameBoard)
     {    
         GameBoard tmp = gameBoard;
         if (deepth > getHeight() / 2)
-        {
-            std::cout << "setNum: " << tmp.edge.treeNum << "\n";
             return true;
-        }
-
         tmp.pushAllDeepth(deepth);
-
         while (!tmp.pq.empty())
         {
             int here = tmp.pq.top().second;
             int j = here % getWide(), i = here / getWide();
             tmp.pq.pop();
-    //        std::cout << " pop i: " << i << " j: " << j << "\n";
-            if (!tmp.setRoood(deepth, i, j))
-            {
-      //          std::cout << "false>> "<<deepth<<"\n";
+            if (!tmp.setRoad(deepth, i, j))
                 return false;
-            }
-            tmp.updateAllDeepth(deepth);     
-   //         char ch;
-     //    tmp.printBoard();
-     //    std::cout << " deepth: " << deepth << "\n";
-     //     std::cin>>ch;
-
-        }
- 
+            tmp.updateAllDeepth(deepth);
+        } 
         int count = 0;
-        while (!currentDeepthSetting(deepth + 1, tmp))
+        while (!makeEven(deepth + 1, tmp))
         {
             if (count++ == 3) return false;
         }
@@ -349,76 +328,78 @@ namespace euler
             for (int i = 0; i < 2; i++)
                 pushToPq(deepth, hLoHi[i], j);
     }
-    bool GameBoard::setRoood(int deepth, int i, int j)
+    bool GameBoard::setRoad(int deepth, int i, int j)
     {
         std::vector<std::vector<int> > adj = getAdj(i, j);
         std::vector<int> undefined = adj[UNDEFINED], road = adj[ROAD], wall = adj[WALL];
         std::vector<int> selected, cantSet, canSet, doSet, toWall;
-
+        //Distinction => Must set and Dont set
         for (int ud = 0; ud < undefined.size(); ud++)
         {
             int ui = getNextI(i, undefined[ud]);
             int uj = getNextJ(j, undefined[ud]);
 
             std::vector<std::vector<int> > nextAdj = getAdj(ui, uj);
+            // next have only one undefined, this is even => selected == odd  => Dont Set
             if (nextAdj[UNDEFINED].size() == 1 && (nextAdj[ROAD].size() == 2 || nextAdj[ROAD].size() == 0))
                 cantSet.push_back(undefined[ud]);
             else
                 canSet.push_back(undefined[ud]);
+            // next have only one undefined, this is odd => selected == even => Do Set
             if (nextAdj[UNDEFINED].size() == 1 && (nextAdj[ROAD].size() == 1 || nextAdj[ROAD].size() == 3))
                 doSet.push_back(undefined[ud]);
         }
-
+        //move => input or output decresses, if merge => take it edge.
         addEdgeState(i, j, -1);
 
 
-        if (wall.size() == 0)
+        if (wall.size() == 0)// SET ROAD 4 or 2
         {
-            if (undefined.size() == 0) // ROAD == 4
+            if (undefined.size() == 0) // ROAD == 4 => skip
             {
                 addEdgeState(i, j, 1);
                 return true;
             }
-            else if (undefined.size() == 1) // ROAD == 3
+            else if (undefined.size() == 1) // ROAD == 3 => 4 3
             {
                 if (canSet.size() == 0)
                     return false;
                 else
                     selected = undefined;
             }
-            else if (undefined.size() == 2) // ROAD == 2
+            else if (undefined.size() == 2) // ROAD == 2 => 4 or 22
             {
                 if (cantSet.size() == 2) return false;
                 int p = getRandomNumber(0, 5);
-                if (cantSet.size() == 0 && (doSet.size() > 0 || getEdgeState(i, j) == 0 || p != 1))
+                if (cantSet.size() == 0 && (doSet.size() > 0 || getEdgeState(i, j) == 0 || p != 1)) // if this can closed or 33%  =>  four   
                     selected = undefined;
-                else if (cantSet.size() > 0 && (getEdgeState(i, j) == 0 && edge.treeNum != 1))
+                else if (cantSet.size() > 0 && (getEdgeState(i, j) == 0 && edge.treeNum != 1)) // if this can closed but cant four => false
                     return false;
-                else if (doSet.size() > 0)
+                else if (doSet.size() > 0) // if must do Set exist But cantSet exist = > fasle
                     return false;
             }
-            else if (undefined.size() == 3) // road == 1
+            else if (undefined.size() == 3) // ROAD == 11
             {
                 int p = getRandomNumber(0, 5);
                 if (cantSet.size() == 3)
                     return false;
-                if ((p != 1 || doSet.size() > 1 || getEdgeState(i, j) == 0) && cantSet.size() == 0)
+                if ((p != 1 || doSet.size() > 1 || getEdgeState(i, j) == 0) && cantSet.size() == 0) // if this can closed => 4
                     selected = undefined;
                 else
                 {
-                    if (doSet.size() > 1)
+                    if (doSet.size() > 1) // if must select two => false
                         return false;
-                    if (doSet.size() == 1)
+                    if (doSet.size() == 1) // must do set
                         selected = doSet;
-                    else
+                    else // random select
                         selected.push_back(canSet[getRandomNumber(0, canSet.size() - 1)]);
                 }
             }
             else return false;
         }
-        else if (wall.size() == 1)
+        else if (wall.size() == 1) // MUST SET 2 ROAD
         {
-            if (undefined.size() == 0) // ROAD == 3
+            if (undefined.size() == 0) // ROAD == 3  => false3
             {
                 return false;
             }
@@ -466,7 +447,7 @@ namespace euler
             }
             else return false;
         }
-        else if (wall.size() == 2)
+        else if (wall.size() == 2) // MUST SET 2 ROAD
         {
             if (undefined.size() == 0)
             {
@@ -489,7 +470,7 @@ namespace euler
         }
         else
             setBoard(i, j, 1);
-
+        //Must set WALL select
         for (int ud = 0; ud < undefined.size(); ud++)
         {
             bool isSelected = false;

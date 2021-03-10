@@ -19,10 +19,12 @@ int main()
         //genEuler
         euler::GameBoard gameboard(n);
         //showEuler
-        while (!gameboard.currentDeepthSetting(0, gameboard))
+        while (!gameboard.makeEven(0, gameboard))
         {
         }
+        cout<<"===================================================================================\n";
         gameboard.printBoard();
+        cout<<"===================================================================================\n";
         if (!gameboard.check())
         {
             cout << "======ODODODODODDO======\n\n";
