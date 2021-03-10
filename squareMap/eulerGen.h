@@ -10,21 +10,20 @@
 
 namespace euler
 {
-    const int dy[] = { -1, 0, 1,  0 };
-    const int dx[] = { 0, 1, 0, -1 };
-    const int dir[] ={3, 5, 7, 11};
+    const int dy[] = { -1, 0, 1,  0 };                                                  // up right down left
+    const int dx[] = { 0, 1, 0, -1 };                                                   // up right down left                       
+    const int dir[] = { 3, 5, 7, 11 };                                                  // up right down left
 
-    enum State
-    {
+    enum State {
         WALL = 0,
         UNDEFINED = 1,
         ROAD = 2,
-        UP = 3,
+        UP = 3, 
         RIGHT = 5,
         DOWN = 7,
         LEFT = 11,
+        FOUR = 3 * 5 * 7 * 11,
         DEFINED = 13,
-        FOUR = 3*5*7*11,
     };
     class GameBoard
     {
@@ -33,51 +32,38 @@ namespace euler
         std::vector<std::vector<int> > board;
         disjoint::Disjoint edge;
     public:
-        //Setting GameBoard height x wide
-        //initillize board, edge
-        explicit GameBoard(int n = 0);
-        void InitialBoard();
-        //print board 
-        void printBoard();
+        explicit GameBoard(int n = 0);                                                   // Setting GameBoard n x n
+        void InitialBoard();                                                             // initillize board, edge
+        void printBoard();                                                               // print board 
 
-        bool isRange(int i, int j, int deepth);
-        int toNum(int i, int j);
-        int reverseDir(int d);
+        int toNum(int i, int j);                                                         // i, j => i* width + j
+        int reverseDir(int d);                                                           // up(0) <=> down(3) , right(1) <=> left(2)  
 
-        int getEdgeState(int i, int j);
-        double getPriority(int deepth, int i, int j);
-        int getBoard(int i, int j) const;
-        int getHeight() const;
-        int getWide() const;
-        int getNextI(int i, int dir);
-        int getNextJ(int j, int dir);
-        void setEdgeState(int i, int j, int x);
-        void setBoard(int i, int j, int that);
-        bool setRoad(int deepth, int i, int j, std::vector<int>& selected);
-        void setWall(int deepth, int i, int j, std::vector<int>& toWall);
-        std::vector<std::vector<int> > getAdj(int i, int j);
+        std::vector<std::vector<int> > getAdj(int i, int j);                             // get Adj => {adj[WALL], adj[UNDEFINED], adj[ROAD]}
+        int getEdgeState(int i, int j);                                                  // get edge i, j State == get tree leaf size
+        double getPriority(int deepth, int i, int j);                                    // get priority => select priority based adj state
+        int getBoard(int i, int j) const;                                                // get board[i][j]
+        int getHeight() const;                                                           // get n*m .. n
+        int getWide() const;                                                             // get n*m .. m
+        int getNextI(int i, int d);                                                      // get i + dy[d]
+        int getNextJ(int j, int d);                                                      // get j + dx[d]
+        void setBoard(int i, int j, int that);                                           // set board[i][j] = that
+        bool setRoad(int deepth, int i, int j, std::vector<int>& selected);              // set board[i][j] => road .. selected dir => road
+        bool setRoad(int deepth, int i, int j);                                          // set board[i][j] => road .. selected dir => setRoad()
+        void setWall(int deepth, int i, int j, std::vector<int>& toWall);                // set board[i + toWall][j + towall] => WALL
 
-        void pushAllDeepth(int deepth);
-        void pushToPq(int deepth, int i, int j);
-        void changePriority(int deepth, int i, int j, std::vector<int>& undefined);
-        void updatePriority(int deepth, int i, int j);
+        void pushAllDeepth(int deepth);                                                  // push to pq(maxHeap) all vertex in deepth
+        void pushToPq(int deepth, int i, int j);                                         // push and set priority
+        void updatePriority(int deepth, int i, int j);                                   // priority(i, j) update: based adj state (wall 1, wall 1, wall 2, wall 3)
+        void changePriority(int deepth, int i, int j, std::vector<int>& undefined);      // priority(i, j) 
+        void addEdgeState(int i, int j, int x);                                          // edge.state(i, f) = edge.state(i, j) + x
 
-        void addEdgeState(int i, int j, int x);
+        bool merge(int deepth, int i, int j, int d);                                     // merge i, j and next dir : d
 
-        //merge i, j <==> ii , jj
-        void merge(int deepth, int i, int j, int ii, int jj);
-        bool merge(int deepth, int i, int j, int d);
-        //set Road i, j => select direction up right down left
-
-        //all deepth setting all tile have even edge
-        //if can't set return false and reconstruct
-        //if next deepth have not even road return false and reconstruct
-        //    even road mean: out int => can Euler circuit
-        bool currentDeepthSetting(int deepth, GameBoard& gameBoard);
-        void updateAllDeepth(int deepth);
-        bool check();
-        bool setRoood(int deepth, int i, int j);
+        bool makeEven(int deepth, GameBoard& gameBoard);                                 // all edge to even in deepth
+        void updateAllDeepth(int deepth);                                                // all vertex update priority_queue(max_Heap)
+        bool check();                                                                    // if find edge have odd => false
     };
-    int getRandomNumber(int min, int max);
+    int getRandomNumber(int min, int max);                                               // get x  (min<= x <= max)
 }
 #endif
